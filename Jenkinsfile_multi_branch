@@ -41,7 +41,7 @@ pipeline {
           try {
             dockerImage = docker.build("${ciImageName}", "--file ./Dockerfile ${WORKSPACE}")
 
-            dockerImage.withRun('-p 9999:9999 --hostname=${CONTAINER_NAME} -d') {
+            dockerImage.withRun("-p 9999:9999 --hostname=${CONTAINER_NAME} -d") {
               forbiddenResponse = sh(script: "curl http://${CONTAINER_NAME}:9999", returnStdout: true)
               helloWorldResponse = sh(script: "curl http://${CONTAINER_NAME}:9999/helloworld", returnStdout: true)
 
