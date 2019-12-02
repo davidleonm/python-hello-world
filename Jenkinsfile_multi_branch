@@ -3,6 +3,8 @@ pipeline {
 
   environment {
     GITHUB_TOKEN = credentials('github-token')
+    FORBIDDEN_TEXT = 'Forbidden site!'
+    HELLO_WORLD_TEXT = 'Hello World!'
   }
 
   stages {
@@ -28,6 +30,32 @@ pipeline {
         }
       }
     }
+
+    stage('Build & Test deployment') {
+      steps {
+        script {
+          def dockerImage = null
+          def ciImageName = "python-hello-world-ci-image-${BUILD_ID}"
+
+          try {
+            dockerImage = docker.build("${ciImageName}", "--file ./Dockerfile ${WORKSPACE}")
+
+            dockerImage.withRun('-p 9999:9999 --rm -d') {
+              forbiddenResponse = sh(script: 'curl http://127.0.0.1:9999', returnStdout: true)
+              helloWorldResponse = sh(script: 'curl http://127.0.0.1:9999/helloworld', returnStdout: true)
+
+              if (forbiddenResponse != "${FORBIDDEN_TEXT}" || helloWorldResponse != "${HELLO_WORLD_TEXT}") {
+                currentBuild.result = 'FAILURE'
+                throw new Exception('Error in CI, got non-expected values')
+              }
+            }
+          } finally {
+            if (dockerImage != null) {
+              sh "docker rmi -f ${ciImageName}"
+            }
+          }
+        }
+      }
   }
   post {
     success {

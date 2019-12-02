@@ -52,20 +52,20 @@ pipeline {
     stage('Build & Deploy image') {
       steps {
         script {
-          def DOCKER_IMAGE = null
+          def dockerImage = null
 
           try {
-            VERSION = sh(script: 'cat VERSION', returnStdout: true)
-            DOCKER_IMAGE = docker.build("${DOCKERHUB_REGISTRY_NAME}", "--file ./Dockerfile ${WORKSPACE}")
+            version = sh(script: 'cat VERSION', returnStdout: true)
+            dockerImage = docker.build("${DOCKERHUB_REGISTRY_NAME}", "--file ./Dockerfile ${WORKSPACE}")
 
             docker.withRegistry('', 'docker-hub-login') {
-              DOCKER_IMAGE.push("${VERSION}")
-              DOCKER_IMAGE.push('latest')
+              dockerImage.push("${version}")
+              dockerImage.push('latest')
             }
           } finally {
-            if (DOCKER_IMAGE != null) {
+            if (dockerImage != null) {
               sh """
-                docker rmi -f ${DOCKERHUB_REGISTRY_NAME}:${VERSION}
+                docker rmi -f ${DOCKERHUB_REGISTRY_NAME}:${version}
                 docker rmi -f ${DOCKERHUB_REGISTRY_NAME}:latest
               """
             }
