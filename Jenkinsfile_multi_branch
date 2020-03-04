@@ -51,7 +51,7 @@ pipeline {
             }
           } finally {
             if (dockerImage != null) {
-              sh "docker rmi -f ${ciImageName}"
+              // sh "docker rmi -f ${ciImageName}"
             }
           }
         }
