@@ -5,6 +5,7 @@ pipeline {
     GITHUB_TOKEN = credentials('github-token')
     FORBIDDEN_TEXT = 'Forbidden site!'
     HELLO_WORLD_TEXT = 'Hello World!'
+    CI_CONTAINER_NAME = 'ci-container'
   }
 
   stages {
@@ -40,9 +41,9 @@ pipeline {
           try {
             dockerImage = docker.build("${ciImageName}", "--file ./Dockerfile ${WORKSPACE}")
 
-            dockerImage.withRun('-p 9999:9999 --name=ci-container -d') {
-              forbiddenResponse = sh(script: "curl http://192.168.1.69:9999", returnStdout: true)
-              helloWorldResponse = sh(script: "curl http://192.168.1.69:9999/helloworld", returnStdout: true)
+            dockerImage.withRun('-p 9999:9999 --name=${CI_CONTAINER_NAME} -d') {
+              forbiddenResponse = sh(script: "curl http://${CI_CONTAINER_NAME}:9999", returnStdout: true)
+              helloWorldResponse = sh(script: "curl http://${CI_CONTAINER_NAME}:9999/helloworld", returnStdout: true)
 
               if (forbiddenResponse != "${FORBIDDEN_TEXT}" || helloWorldResponse != "${HELLO_WORLD_TEXT}") {
                 currentBuild.result = 'FAILURE'
@@ -51,7 +52,7 @@ pipeline {
             }
           } finally {
             if (dockerImage != null) {
-              // sh "docker rmi -f ${ciImageName}"
+              sh "docker rmi -f ${ciImageName}"
             }
           }
         }
