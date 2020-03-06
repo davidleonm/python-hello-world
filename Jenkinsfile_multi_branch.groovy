@@ -5,7 +5,9 @@ pipeline {
     GITHUB_TOKEN = credentials('github-token')
     FORBIDDEN_TEXT = 'Forbidden site!'
     HELLO_WORLD_TEXT = 'Hello World!'
-    CI_URL = "${JENKINS_URL}".replace('8080', '9999')
+    
+    // The Jenkins server is the host of the environment so the URL for CI request is the same but different port
+    CI_URL = "${JENKINS_URL}".replace('8080/', '9999')
   }
 
   stages {

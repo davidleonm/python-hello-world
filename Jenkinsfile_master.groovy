@@ -4,6 +4,12 @@ pipeline {
   environment {
     GITHUB_TOKEN = credentials('github-token')
     DOCKERHUB_REGISTRY_NAME = 'davidleonm/pythonhelloworld'
+
+    FORBIDDEN_TEXT = 'Forbidden site!'
+    HELLO_WORLD_TEXT = 'Hello World!'
+
+    // The Jenkins server is the host of the environment so the URL for CI request is the same but different port
+    CI_URL = "${JENKINS_URL}".replace('8080/', '9999')
   }
 
   stages {
@@ -57,6 +63,16 @@ pipeline {
           try {
             version = sh(script: 'cat VERSION', returnStdout: true)
             dockerImage = docker.build("${DOCKERHUB_REGISTRY_NAME}", "--file ./Dockerfile ${WORKSPACE}")
+
+            dockerImage.withRun('-p 9999:9999 --name=ci-container -d') {
+              forbiddenResponse = sh(script: "curl ${CI_URL}", returnStdout: true)
+              helloWorldResponse = sh(script: "curl ${CI_URL}/helloworld", returnStdout: true)
+
+              if (forbiddenResponse != "${FORBIDDEN_TEXT}" || helloWorldResponse != "${HELLO_WORLD_TEXT}") {
+                currentBuild.result = 'FAILURE'
+                throw new Exception('Error in CI, got non-expected values')
+              }
+            }
 
             docker.withRegistry('', 'docker-hub-login') {
               dockerImage.push("${version}")
