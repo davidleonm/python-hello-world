@@ -31,6 +31,7 @@ When a branch is merged to master, Jenkins builds the image and pushes it onto m
 The version is located in the 'VERSION' file. It must be modified manually, I thought about auto-tagging with Jenkins but I think that Jenkins should be readonly. Furthermore, all the Github repositories are configured to allow only signed commits, if Jenkins is able to commit and push, it would imply a secuity breach.
 
 ## Changelog
+* **1.1.0** - Update Dockerfile with the lastest version of python and added curl for CI. Updated Jenkins files to add CI
 * **First release** - First version of this solution after splitting it.
 
 ## License

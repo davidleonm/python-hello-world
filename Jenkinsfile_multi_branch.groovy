@@ -3,6 +3,11 @@ pipeline {
 
   environment {
     GITHUB_TOKEN = credentials('github-token')
+    FORBIDDEN_TEXT = 'Forbidden site!'
+    HELLO_WORLD_TEXT = 'Hello World!'
+    
+    // The Jenkins server is the host of the environment so the URL for CI request is the same but different port
+    CI_URL = "${JENKINS_URL}".replace('8080/', '9999')
   }
 
   stages {
@@ -25,6 +30,33 @@ pipeline {
       steps {
         script {
           sh "ENV/bin/python -m unittest discover -s ${WORKSPACE}/PythonHelloWorld"
+        }
+      }
+    }
+
+    stage('Build & Test deployment') {
+      steps {
+        script {
+          def dockerImage = null
+          def ciImageName = "python-hello-world-ci-image-${BUILD_ID}"
+
+          try {
+            dockerImage = docker.build("${ciImageName}", "--file ./Dockerfile ${WORKSPACE}")
+
+            dockerImage.withRun('-p 9999:9999 --name=ci-container -d') {
+              forbiddenResponse = sh(script: "curl ${CI_URL}", returnStdout: true)
+              helloWorldResponse = sh(script: "curl ${CI_URL}/helloworld", returnStdout: true)
+
+              if (forbiddenResponse != "${FORBIDDEN_TEXT}" || helloWorldResponse != "${HELLO_WORLD_TEXT}") {
+                currentBuild.result = 'FAILURE'
+                throw new Exception('Error in CI, got non-expected values')
+              }
+            }
+          } finally {
+            if (dockerImage != null) {
+              sh "docker rmi -f ${ciImageName}"
+            }
+          }
         }
       }
     }
