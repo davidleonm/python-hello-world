@@ -8,7 +8,7 @@ pipeline {
     stage('Prepare Python ENV') {
       steps {
         script {
-          SetBuildStatus('pending', "${PythonHelloWorldVariables.RepositoryName}")
+          setBuildStatus('pending', "${PythonHelloWorldVariables.RepositoryName}")
 
           // Clean & Prepare new python environment
           sh 'rm -rf ENV'
@@ -39,13 +39,13 @@ pipeline {
   post {
     success {
       script {
-        SetBuildStatus('success', "${PythonHelloWorldVariables.RepositoryName}")
+        setBuildStatus('success', "${PythonHelloWorldVariables.RepositoryName}")
       }
     }
 
     failure {
       script {
-        SetBuildStatus('failure', "${PythonHelloWorldVariables.RepositoryName}")
+        setBuildStatus('failure', "${PythonHelloWorldVariables.RepositoryName}")
       }
     }
   }
